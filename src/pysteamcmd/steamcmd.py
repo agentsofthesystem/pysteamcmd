@@ -64,12 +64,13 @@ class Steamcmd(object):
             raise SteamcmdException('An unknown exception occurred! {}'.format(e))
 
     def _extract_steamcmd(self):
+        steamcmd_full_path = os.path.join(self.download_path, self.steamcmd_zip)
         if self.platform == 'Windows':
-            with zipfile.ZipFile(self.steamcmd_zip, 'r') as f:
+            with zipfile.ZipFile(steamcmd_full_path, 'r') as f:
                 return f.extractall(self.install_path)
 
         elif self.platform == 'Linux':
-            with tarfile.open(self.steamcmd_zip, 'r:gz') as f:
+            with tarfile.open(steamcmd_full_path, 'r:gz') as f:
                 return f.extractall(self.install_path)
 
         else:
@@ -135,6 +136,18 @@ class Steamcmd(object):
             return subprocess.check_call(steamcmd_params)
         except subprocess.CalledProcessError:
             raise SteamcmdException("Steamcmd was unable to run. Did you install your 32-bit libraries?")
+
+    def update_gamefiles(self, gameid, game_install_dir, user='anonymous', password=None, validate=False):
+        """
+        Updates gamefiles for dedicated server. This can also be used to update the gameserver.
+        :param gameid: steam game id for the files downloaded
+        :param game_install_dir: installation directory for gameserver files
+        :param user: steam username (defaults anonymous)
+        :param password: steam password (defaults None)
+        :param validate: should steamcmd validate the gameserver files (takes a while)
+        :return: subprocess call to steamcmd
+        """
+        return self.install_gamefiles(gameid, game_install_dir, user=user, password=password, validate=validate)
 
     def install_workshopfiles(self, gameid, workshop_id, game_install_dir, user='anonymous', password=None,
                               validate=False):
