@@ -23,13 +23,17 @@ class SteamcmdException(Exception):
 
 
 class Steamcmd(object):
-    def __init__(self, install_path):
+    def __init__(self, install_path, download_path):
         """
         :param install_path: installation path for steamcmd
         """
         self.install_path = install_path
         if not os.path.isdir(self.install_path):
             raise SteamcmdException('Install path is not a directory or does not exist: {}'.format(self.install_path))
+
+        self.download_path = download_path
+        if not os.path.isdir(self.install_path):
+            raise SteamcmdException('Download path is not a directory or does not exist: {}'.format(self.install_path))
 
         self.platform = platform.system()
         if self.platform == 'Windows':
@@ -47,9 +51,15 @@ class Steamcmd(object):
                 'The operating system is not supported. Expected Linux or Windows, received: {}'.format(self.platform)
             )
 
-    def _download_steamcmd(self):
+    def _download_steamcmd(self, destination_path: str = None):
         try:
-            return urlretrieve(self.steamcmd_url, self.steamcmd_zip)
+
+            if destination_path:
+                download_to_path = os.path.join(destination_path, self.steamcmd_zip)
+            else:
+                download_to_path = self.steamcmd_zip
+
+            return urlretrieve(self.steamcmd_url, download_to_path)
         except Exception as e:
             raise SteamcmdException('An unknown exception occurred! {}'.format(e))
 
@@ -75,16 +85,17 @@ class Steamcmd(object):
             return vdf.parse(vdf_data)
         return None
 
-    def install(self, force=False):
+    def install(self, force: bool = False):
         """
         Installs steamcmd if it is not already installed to self.install_path.
+        :param steamcmd_dl_path: Designate where steamcmd zip/tarball gets downloaded to.
         :param force: forces steamcmd install regardless of its presence
         :return:
         """
         if not os.path.isfile(self.steamcmd_exe) or force is True:
             # Steamcmd isn't installed. Go ahead and install it.
             try:
-                self._download_steamcmd()
+                self._download_steamcmd(destination_path=self.download_path)
             except SteamcmdException as e:
                 return e
 
